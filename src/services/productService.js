@@ -210,4 +210,9 @@ export async function getProductById(id) {
   return normalizeProductDetail(item);
 }
 
+/** Alias for backwards compatibility */
+export async function getProducts(options = {}) {
+  return getAllProducts(options);
+}
+
 export { normalizeProductSummary };

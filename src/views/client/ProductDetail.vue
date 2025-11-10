@@ -254,9 +254,13 @@ import { getProductById } from "../../services/productService";
 import { addItem } from "../../services/cartService";
 import { useAuthStore } from "../../stores/auth";
 import { getReviewsByProductId } from "../../services/reviewService";
+import { useCart } from "../../services/cartService";
 
 const route = useRoute();
 const router = useRouter();
+
+// Cart service để lấy cart state sau khi thêm sản phẩm
+const { cartState, fetchCart } = useCart();
 
 /* ===== State ===== */
 const product = ref(null);
@@ -404,7 +408,7 @@ async function performCartAction(redirectToCart = false) {
 
 function addToCart() { performCartAction(false); }
 
-/* >>> MUA NGAY: điều hướng thẳng sang checkout, không thêm giỏ <<< */
+/* >>> MUA NGAY: điều hướng thẳng sang checkout, chỉ hiển thị sản phẩm vừa mua <<< */
 async function buyNow() {
   if (!isLoggedIn.value) {
     actionStatus.value = { type: "warning", message: "Vui lòng đăng nhập để mua hàng." };
@@ -423,7 +427,28 @@ async function buyNow() {
   actionLoading.value = true;
   try {
     await addItem(variantId, safeQty); // ✅ thêm sản phẩm vào giỏ
-    router.push({ path: "/checkout", query: { source: "buynow" } }); // ✅ điều hướng sang checkout
+    
+    // Sau khi thêm thành công, lấy cart mới để tìm item vừa thêm
+    await fetchCart();
+    
+    // Tìm item trong giỏ có variantId vừa thêm
+    const cartItem = cartState.items?.find(item => 
+      item.productVariantId === variantId || item.variantId === variantId
+    );
+    
+    if (cartItem?.id) {
+      // Chuyển sang checkout với ID của item vừa thêm
+      router.push({ 
+        path: "/checkout", 
+        query: { 
+          source: "buynow",
+          selected: String(cartItem.id) // ✅ Truyền ID của item vừa thêm
+        } 
+      });
+    } else {
+      // Fallback: nếu không tìm thấy, vẫn chuyển nhưng hiển thị toàn bộ
+      router.push({ path: "/checkout", query: { source: "buynow" } });
+    }
   } catch (err) {
     console.error("Lỗi khi mua ngay:", err);
     actionStatus.value = { type: "error", message: err?.message || "Không thể mua ngay." };

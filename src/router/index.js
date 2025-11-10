@@ -142,9 +142,9 @@ const router = createRouter({
 
 // ====== Middleware kiểm tra đăng nhập ======
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('authToken') // ✅ Đổi từ 'token' thành 'authToken'
   if (to.meta.requiresAuth && !token) {
-    next({ name: 'login' })
+    next({ name: 'login', query: { redirect: to.fullPath } })
   } else {
     next()
   }

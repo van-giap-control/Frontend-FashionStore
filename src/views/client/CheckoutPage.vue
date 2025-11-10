@@ -257,10 +257,19 @@ async function loadItems () {
   try {
     await fetchCart()
     let list = Array.isArray(cartState.items) ? cartState.items : []
+    
+    // ✅ Lọc sản phẩm dựa trên source
     if (source.value === 'cart' && selectedIdsFromQuery.value.length > 0) {
+      // Từ giỏ hàng: chỉ hiển thị các sản phẩm đã chọn
+      const set = new Set(selectedIdsFromQuery.value)
+      list = list.filter(i => set.has(i.id))
+    } else if (source.value === 'buynow' && selectedIdsFromQuery.value.length > 0) {
+      // Từ "Mua ngay": chỉ hiển thị sản phẩm vừa thêm
       const set = new Set(selectedIdsFromQuery.value)
       list = list.filter(i => set.has(i.id))
     }
+    // Nếu không có filter nào, hiển thị toàn bộ giỏ hàng
+    
     items.value = list.map((it, idx) => ({
       key: it.id ?? idx,
       id: it.productId ?? it.id,

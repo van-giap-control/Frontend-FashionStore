@@ -94,6 +94,19 @@ export async function request(
     const error = new Error(message);
     error.status = response.status;
     error.details = json?.errors;
+    
+    // ✅ Tự động logout khi token hết hạn (401)
+    if (response.status === 401) {
+      // Import clearAuth từ auth store
+      const { clearAuth } = await import("../stores/auth");
+      clearAuth();
+      
+      // Chuyển về trang login (nếu không phải đang ở trang login)
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login?expired=1';
+      }
+    }
+    
     throw error;
   }
 
